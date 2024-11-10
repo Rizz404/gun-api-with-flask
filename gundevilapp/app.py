@@ -16,13 +16,27 @@ cors = CORS()
 
 def create_app():
   app = Flask(__name__, template_folder='templates')
-  app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./gun.db'
+
+  if os.getenv('VERCEL_ENV') == 'production':
+    # * Konfigurasi SSL yang lebih aman
+    database_url = os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'connect_args': {
+            'ssl': {
+              'ca': '../ca-certificate.crt',  # * Path ke file CA certificate
+              'ssl_mode': 'REQUIRED'
+            }
+        }
+    }
+  else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./gun.db'
 
   # * Waktu session login
   app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=7)
 
   # * Nanti taro di env
-  app.secret_key = os.getenv('secret_key')
+  app.secret_key = os.getenv('SECRET_KEY')
 
   db.init_app(app)
 
