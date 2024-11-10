@@ -65,6 +65,12 @@ def get_user_profile():
   user_data = {
       "id": current_user.id,
       "username": current_user.username,
-      "email": current_user.email
+      "email": current_user.email,
+      "password": current_user.password,
+      "role": current_user.role.value,
+      "picture": current_user.picture,
+      "bio": current_user.bio,
+      "created_at": current_user.created_at,
+      "updated_at": current_user.updated_at,
   }
   return jsonify(user_data), 200

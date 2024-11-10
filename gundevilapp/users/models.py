@@ -27,6 +27,10 @@ class User(db.Model, UserMixin):
   updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(
     timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+  # * Relasi one-to-one ke Cart
+  cart = db.relationship("Cart", back_populates="user",
+                         uselist=False, cascade="all, delete-orphan")
+
   def __repr__(self):
     return f"<User: {self.username} and Role: {self.role}>"
 
@@ -42,4 +46,7 @@ class User(db.Model, UserMixin):
       "role": self.role.value,
       "picture": self.picture,
       "bio": self.bio,
+      "created_at": self.created_at,
+      "updated_at": self.updated_at,
+      "cart": self.cart.to_dict() if self.cart else None
     }

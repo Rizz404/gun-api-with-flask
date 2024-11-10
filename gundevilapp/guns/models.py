@@ -27,6 +27,7 @@ class Gun(db.Model):
   # * Relasi ke GunPictures (One-to-Many)
   pictures = relationship(
     "GunPictures", back_populates="gun", cascade="all, delete-orphan")
+  cart_items = relationship("CartItems", back_populates="gun")
 
   def __repr__(self):
     return f"<Gun: {self.model}, Price: {self.price}>"

@@ -40,6 +40,7 @@ def login():
   try:
     username = request.form.get('username')
     password = request.form.get('password')
+    remember = request.form.get('remember') == 'on'
 
     if not username or not password:
       return jsonify({"error": 'Some field is required'}), 400
@@ -47,7 +48,7 @@ def login():
     user = User.query.filter(User.username == username).first()
 
     if bcrypt.check_password_hash(user.password, password):
-      login_user(user)
+      login_user(user, remember=remember)
       return jsonify({
         'message': f"Welcome {user.username}!",
         'data': user.to_dict()
