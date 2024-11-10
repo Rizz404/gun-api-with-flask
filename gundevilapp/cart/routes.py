@@ -1,5 +1,6 @@
 from flask import request, Blueprint, jsonify
 from flask_login import login_required, current_user
+from ..utils import api_response
 
 from gundevilapp.app import db
 from gundevilapp.cart.models import Cart, CartItems
@@ -39,8 +40,9 @@ def index():
   if request.method == 'GET':
     cart = Cart.query.filter_by(user_id=current_user.id).first()
 
-    return jsonify(cart.to_dict())
-
+    return api_response.success(
+      data=cart.to_dict()
+    )
   elif request.method == 'POST':
     try:
       if request.is_json:
@@ -55,13 +57,19 @@ def index():
       cart = Cart(**cart_data)
       db.session.add(cart)
       db.session.commit()
-      return jsonify(cart.to_dict()), 201
+      return api_response.success(
+        data=cart.to_dict(),
+        code=201
+      )
     except ValueError as e:
       db.session.rollback()
-      return jsonify({'error': str(e)}), 400
+      return api_response.error(message=str(e))
     except Exception as e:
-      db.session.rollback()
-      return jsonify(str(e)), 500
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
 
 @cart.route('/<int:id>', methods=['GET', 'DELETE'])
@@ -69,22 +77,33 @@ def with_id(id):
   cart = Cart.query.get(id)
 
   if not cart:
-    return jsonify({"error": "Cart not found"}), 404
+    return api_response.error(
+      message="Cart not found",
+      code=404
+    )
 
   if request.method == 'GET':
-    return jsonify(cart.to_dict())
+    return api_response.success(
+      data=cart.to_dict()
+    )
 
   elif request.method == 'DELETE':
     try:
       db.session.delete(cart)
       db.session.commit()
 
-      return jsonify({
-        'message': f'Cart with id {id} successfully deleted'
-      })
-    except Exception as e:
+      return api_response.success(
+        message=f'Cart with id {id} successfully deleted'
+      )
+    except ValueError as e:
       db.session.rollback()
-      return jsonify(str(e)), 500
+      return api_response.error(message=str(e))
+    except Exception as e:
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
 
 @cart.route('/cart-items/', methods=['POST'])
@@ -101,20 +120,27 @@ def cart_items():
       missing_fields = [
         field for field in required_fields if not cart_items_data.get(field)]
       if missing_fields:
-        return jsonify({
-          'error': f"Missing required fields: {', '.join(missing_fields)}"
-        }), 400
+        return api_response.error(
+          message="Missing required fields",
+          errors=missing_fields
+        )
 
       cart_items = CartItems(**cart_items_data)
       db.session.add(cart_items)
       db.session.commit()
-      return jsonify(cart_items.to_dict()), 201
+      return api_response.success(
+        data=cart.to_dict(),
+        code=201
+      )
     except ValueError as e:
       db.session.rollback()
-      return jsonify({'error': str(e)}), 400
+      return api_response.error(message=str(e))
     except Exception as e:
-      db.session.rollback()
-      return jsonify(str(e)), 500
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
 
 @cart.route('/cart-items/<int:id>', methods=['PATCH', 'DELETE'])
@@ -122,7 +148,10 @@ def cart_items_with_id(id):
   cart_item = CartItems.query.get(id)
 
   if not cart_item:
-    return jsonify({"error": "CartItem not found"}), 404
+    return api_response.error(
+      message="Cart item not found",
+      code=404
+    )
 
   if request.method == 'PATCH':
     try:
@@ -139,22 +168,34 @@ def cart_items_with_id(id):
 
       db.session.commit()
 
-      return jsonify(cart_item.to_dict()), 200
+      return api_response.success(
+        message="Cart item updated sucessfully",
+        data=cart_item.to_dict()
+      )
     except ValueError as e:
       db.session.rollback()
-      return jsonify({'error': str(e)}), 400
+      return api_response.error(message=str(e))
     except Exception as e:
-      db.session.rollback()
-      return jsonify(str(e)), 500
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
   elif request.method == 'DELETE':
     try:
       db.session.delete(cart_item)
       db.session.commit()
 
-      return jsonify({
-          'message': f'CartItem with id {id} successfully deleted'
-      }), 200
-    except Exception as e:
+      return api_response.success(
+        message=f'CartItem with id {id} successfully deleted'
+      )
+    except ValueError as e:
       db.session.rollback()
-      return jsonify(str(e)), 500
+      return api_response.error(message=str(e))
+    except Exception as e:
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )

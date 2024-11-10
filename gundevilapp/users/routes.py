@@ -1,5 +1,6 @@
 from flask import request, Blueprint, jsonify
 from flask_login import current_user, login_required
+from ..utils import api_response
 
 from gundevilapp.app import db
 from gundevilapp.users.models import User
@@ -29,12 +30,12 @@ def parse_user_data(data, is_form=False):
 
 @users.route('/')
 def index():
-  users = User.query.all()
+  page = request.args.get('page', 1, type=int)
+  page_size = request.args.get('page_size', 10, type=int)
 
-  # * Ada function untuk ubah ke dict
-  users_list = [user.to_dict() for user in users]
+  users_query = User.query
 
-  return users_list
+  return api_response.paginate(users_query, page, page_size)
 
 
 @users.route('/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
@@ -42,21 +43,32 @@ def with_id(id):
   user = User.query.get(id)
 
   if not user:
-    return jsonify({"error": "Gun not found"}), 404
+    return api_response.error(
+      message="User not found",
+      code=404
+    )
 
   if request.method == 'GET':
-    return jsonify(user.to_dict())
+    return api_response.success(
+      data=user.to_dict()
+    )
 
   elif request.method == 'DELETE':
     try:
       db.session.delete(user)
       db.session.commit()
-      return jsonify({
-        'message': f'User with id {id} successfully deleted'
-      })
-    except Exception as e:
+      return api_response.success(
+        message=f"Successfully delete user with id:{id}"
+      )
+    except ValueError as e:
       db.session.rollback()
-      return jsonify(str(e)), 500
+      return api_response.error(message=str(e))
+    except Exception as e:
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
 
 @users.route('/profile', methods=['GET'])
@@ -73,4 +85,6 @@ def get_user_profile():
       "created_at": current_user.created_at,
       "updated_at": current_user.updated_at,
   }
-  return jsonify(user_data), 200
+  return api_response.success(
+    data=user_data
+  )

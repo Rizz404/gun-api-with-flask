@@ -1,5 +1,6 @@
 from flask import request, Blueprint, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
+from ..utils import api_response
 
 from gundevilapp.app import db, bcrypt
 from gundevilapp.users.models import User, RoleEnum
@@ -17,7 +18,10 @@ def register():
     role = request.form.get('role', 'user')
 
     if not username or not email or not password:
-      return jsonify({"error": 'Username, email, and passwor are required'}), 400
+      return api_response.error(
+        message="Username, email, and passwor are required",
+        code=400
+      )
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
@@ -29,10 +33,19 @@ def register():
 
     db.session.add(user)
     db.session.commit()
-    return jsonify(user.to_dict()), 201
-  except Exception as e:
+    return api_response.success(
+      data=user.to_dict(),
+      code=201
+    )
+  except ValueError as e:
     db.session.rollback()
-    return jsonify(str(e)), 500
+    return api_response.error(message=str(e))
+  except Exception as e:
+    return api_response.error(
+      message="Internal server error",
+      code=500,
+      errors=str(e)
+    )
 
 
 @auth.route('/login', methods=['POST'])
@@ -43,26 +56,41 @@ def login():
     remember = request.form.get('remember') == 'on'
 
     if not username or not password:
-      return jsonify({"error": 'Some field is required'}), 400
+      return api_response.error(
+        message="Username and password are required",
+        code=400
+      )
 
     user = User.query.filter(User.username == username).first()
 
     if bcrypt.check_password_hash(user.password, password):
       login_user(user, remember=remember)
-      return jsonify({
-        'message': f"Welcome {user.username}!",
-        'data': user.to_dict()
-      })
+      return api_response.success(
+        message=f"Welcome {user.username}!",
+        data=user.to_dict()
+      )
     else:
-      return jsonify({"error": "Invalid username or password"}), 401
+      return api_response.error(
+        message="Invalid username or password",
+        code=401
+      )
+  except ValueError as e:
+    db.session.rollback()
+    return api_response.error(message=str(e))
   except Exception as e:
-    return jsonify({'error': str(e)}), 500
+    return api_response.error(
+      message="Internal server error",
+      code=500,
+      errors=str(e)
+    )
 
 
 @auth.route('/logout', methods=['GET'])
 def logout():
   logout_user()
-  return jsonify({"message": "Successfully logged out"}), 200
+  return api_response.success(
+    message="Logout successfull"
+  )
 
 
 @auth.route('/profile', methods=['GET'])
@@ -73,4 +101,6 @@ def get_user_profile():
       "username": current_user.username,
       "email": current_user.email
   }
-  return jsonify(user_data), 200
+  return api_response.success(
+    data=user_data
+  )

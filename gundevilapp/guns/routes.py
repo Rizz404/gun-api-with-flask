@@ -2,6 +2,8 @@ from flask import request, Blueprint, jsonify
 
 from gundevilapp.app import db
 from gundevilapp.guns.models import Gun, GunPictures
+# ? gak tau cara kerja importnya gimana, yang penting work
+from ..utils import api_response
 
 guns = Blueprint('guns', __name__, template_folder='templates')
 
@@ -53,11 +55,15 @@ def create_gun_pictures(gun, pictures_data):
 @guns.route('/', methods=['GET', 'POST'])
 def index():
   if request.method == 'GET':
-    guns = Gun.query.all()
-    guns_list = [gun.to_dict() for gun in guns]
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
 
-    return jsonify(guns_list)
-
+    guns_query = Gun.query
+    return api_response.paginate(
+        query=guns_query,
+        page=page,
+        page_size=page_size
+    )
   elif request.method == 'POST':
     try:
       if request.is_json:
@@ -72,9 +78,11 @@ def index():
       missing_fields = [
         field for field in required_fields if not gun_data.get(field)]
       if missing_fields:
-        return jsonify({
-          'error': f"Missing required fields: {', '.join(missing_fields)}"
-        }), 400
+        return api_response.error(
+          message="Missing required fields",
+          code=400,
+          errors=missing_fields
+        )
 
       gun = Gun(**gun_data)
       db.session.add(gun)
@@ -83,12 +91,20 @@ def index():
         create_gun_pictures(gun, pictures_data)
 
       db.session.commit()
-      return jsonify(gun.to_dict()), 201
+      return api_response.success(
+        data=gun.to_dict(),
+        message='Gun created successfully',
+        code=201
+      )
     except ValueError as e:
       db.session.rollback()
-      return jsonify({'error': str(e)}), 400
+      return api_response.error(message=str(e))
     except Exception as e:
-      return jsonify(str(e)), 500
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
 
 @guns.route('/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
@@ -96,10 +112,16 @@ def with_id(id):
   gun = Gun.query.get(id)
 
   if not gun:
-    return jsonify({"error": "Gun not found"}), 404
+    return api_response.error(
+      message='Gun not found',
+      code=404,
+      errors=gun
+    )
 
   if request.method == 'GET':
-    return jsonify(gun.to_dict())
+    return api_response.success(
+      data=gun.to_dict()
+    )
 
   elif request.method == 'PATCH':
     try:
@@ -122,12 +144,19 @@ def with_id(id):
         create_gun_pictures(gun, pictures_data)
 
       db.session.commit()
-      return jsonify(gun.to_dict())
+      return api_response.success(
+        message="Success update gun",
+        data=gun.to_dict(),
+      )
     except ValueError as e:
       db.session.rollback()
-      return jsonify({'error': str(e)}), 400
+      return api_response.error(message=str(e))
     except Exception as e:
-      return jsonify(str(e)), 500
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
   elif request.method == 'DELETE':
     try:
@@ -137,26 +166,36 @@ def with_id(id):
       db.session.delete(gun)
       db.session.commit()
 
-      return jsonify({
-        'message': f'Gun with id {id} successfully deleted'
-      })
+      return api_response.success(
+        message=f"Successfully delete gun with id:{id}"
+      )
     except ValueError as e:
       db.session.rollback()
-      return jsonify({'error': str(e)}), 400
+      return api_response.error(message=str(e))
     except Exception as e:
-      return jsonify(str(e)), 500
+      return api_response.error(
+        message="Internal server error",
+        code=500,
+        errors=str(e)
+      )
 
 
 @guns.route('/create-batch', methods=['POST'])
 def batch_create():
   try:
     if not request.is_json:
-      return jsonify({'error': 'Request must be JSON'}), 400
+      return api_response.error(
+        message="Request must be JSON",
+        code=400
+      )
 
     data = request.get_json()
 
     if not isinstance(data, list):
-      return jsonify({'error': 'Request must be an array of guns'}), 400
+      return api_response.error(
+        message="Request must be an array of guns",
+        code=400
+      )
 
     created_guns = []
 
@@ -174,13 +213,19 @@ def batch_create():
       created_guns.append(gun)
 
     db.session.commit()
-    return jsonify([gun.to_dict() for gun in created_guns]), 201
+    return api_response.success(
+      data=[gun.to_dict() for gun in created_guns],
+      code=201
+    )
   except ValueError as e:
     db.session.rollback()
-    return jsonify({'error': str(e)}), 400
+    return api_response.error(message=str(e))
   except Exception as e:
-    db.session.rollback()
-    return jsonify({'error': str(e)}), 500
+    return api_response.error(
+      message="Internal server error",
+      code=500,
+      errors=str(e)
+    )
 
 
 @guns.route('/delete-batch', methods=['DELETE'])
@@ -191,10 +236,15 @@ def batch_delete():
     for gun in guns:
       db.session.delete(gun)  # Hapus satu per satu
     db.session.commit()
-    return jsonify({'message': 'All guns deleted successfully'})
+    return api_response.success(
+      message="All guns deleted successfully"
+    )
   except ValueError as e:
     db.session.rollback()
-    return jsonify({'error': str(e)}), 400
+    return api_response.error(message=str(e))
   except Exception as e:
-    db.session.rollback()
-    return jsonify({'error': str(e)}), 500
+    return api_response.error(
+      message="Internal server error",
+      code=500,
+      errors=str(e)
+    )
