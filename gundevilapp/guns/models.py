@@ -2,6 +2,7 @@ from gundevilapp.app import db
 from sqlalchemy import Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
+from flask_login import current_user, login_required
 
 
 class Gun(db.Model):
@@ -17,6 +18,8 @@ class Gun(db.Model):
   price = db.Column(db.Integer, nullable=False)
   description = db.Column(db.Text, nullable=True)  # * Penjelasan senjata
   stock = db.Column(db.Integer, nullable=False, default=0)  # * Jumlah stok
+  # * Jumlah senjata yang telah terjual
+  sold_count = db.Column(db.Integer, default=0)
 
   # * Timestamps
   created_at = db.Column(db.DateTime(timezone=True),
@@ -24,10 +27,11 @@ class Gun(db.Model):
   updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(
     timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-  # * Relasi ke GunPictures (One-to-Many)
+  # * Relation
   pictures = relationship(
     "GunPictures", back_populates="gun", cascade="all, delete-orphan")
   cart_items = relationship("CartItems", back_populates="gun")
+  sales = relationship("Sales", back_populates="gun")
 
   def __repr__(self):
     return f"<Gun: {self.model}, Price: {self.price}>"
@@ -47,6 +51,7 @@ class Gun(db.Model):
       "price": self.price,
       "description": self.description,
       "stock": self.stock,
+      "sold_count": self.sold_count,
       "created_at": self.created_at.isoformat(),
       "updated_at": self.updated_at.isoformat(),
       # Include related pictures

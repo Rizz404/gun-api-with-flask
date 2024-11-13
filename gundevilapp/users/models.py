@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 import enum
 from flask_login import UserMixin
 from gundevilapp.app import db
+from sqlalchemy.orm import relationship
+
 
 # * Pake sqlite type datanya terbates hati-hati
 
@@ -28,8 +30,9 @@ class User(db.Model, UserMixin):
     timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
   # * Relasi one-to-one ke Cart
-  cart = db.relationship("Cart", back_populates="user",
-                         uselist=False, cascade="all, delete-orphan")
+  cart = relationship("Cart", back_populates="user",
+                      uselist=False, cascade="all, delete-orphan")
+  sales = relationship("Sales", back_populates="gun")
 
   def __repr__(self):
     return f"<User: {self.username} and Role: {self.role}>"
