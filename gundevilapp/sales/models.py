@@ -15,8 +15,6 @@ class Sales(db.Model):
   quantity = db.Column(db.Integer, nullable=False, default=1)
   created_at = db.Column(db.DateTime(timezone=True),
                          default=lambda: datetime.now(timezone.utc))
-  created_at = db.Column(db.DateTime(timezone=True),
-                         default=lambda: datetime.now(timezone.utc))
   updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(
     timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

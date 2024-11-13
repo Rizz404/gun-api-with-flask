@@ -13,14 +13,14 @@ def parse_sale_data(data, is_form=False):
   # * Helper function buat parse data buat form dan juga json
   if is_form:
     return {
-      'gun_id': data.get('gun_id') if data.get('gun_id') else None,
-      'total_amount': data.get('total_amount'),
-      'quantity': data.get('quantity') if data.get('quantity') else None,
+      'gun_id': int(data.get('gun_id')) if data.get('gun_id') else None,
+      'total_amount': data.get('total_amount') if data.get('total_amount') is not None else None,
+      'quantity': int(data.get('quantity')) if data.get('quantity') else 1,
     }
   return {
-    'gun_id': data.get('gun_id'),
-    'total_amount': data.get('total_amount'),
-    'quantity': data.get('quantity'),
+    'gun_id': int(data.get('gun_id')),
+    'total_amount': data.get('total_amount') if data.get('total_amount') is not None else None,
+    'quantity': int(data.get('quantity')) if data.get('quantity') else 1,
   }
 
 
@@ -56,11 +56,12 @@ def index():
 
       gun.stock -= sale_data['quantity']
       gun.sold_count += sale_data['quantity']
+      total_amount = gun.price * sale_data['quantity']
 
       sale = Sales(
           user_id=user_id,
           gun_id=gun.id,
-          total_amount=sale_data['total_amount'],
+          total_amount=int(total_amount),
           quantity=sale_data['quantity']
       )
 

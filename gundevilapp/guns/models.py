@@ -9,6 +9,7 @@ class Gun(db.Model):
   __tablename__ = 'guns'
 
   id = db.Column(db.Integer, primary_key=True)
+  seller_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
   model = db.Column(db.String(100), nullable=False)
   caliber = db.Column(db.Integer, nullable=False)
   capacity = db.Column(db.Integer, nullable=False)
@@ -16,10 +17,8 @@ class Gun(db.Model):
   weight = db.Column(db.Integer, nullable=True)
   action = db.Column(db.String(100), nullable=False)
   price = db.Column(db.Integer, nullable=False)
-  description = db.Column(db.Text, nullable=True)  # * Penjelasan senjata
-  stock = db.Column(db.Integer, nullable=False, default=0)  # * Jumlah stok
-  # * Jumlah senjata yang telah terjual
-  sold_count = db.Column(db.Integer, default=0)
+  description = db.Column(db.Text, nullable=True)
+  stock = db.Column(db.Integer, nullable=False, default=0)
 
   # * Timestamps
   created_at = db.Column(db.DateTime(timezone=True),
@@ -31,7 +30,8 @@ class Gun(db.Model):
   pictures = relationship(
     "GunPictures", back_populates="gun", cascade="all, delete-orphan")
   cart_items = relationship("CartItems", back_populates="gun")
-  sales = relationship("Sales", back_populates="gun")
+  seller = relationship("User", back_populates="guns")
+  orders = relationship("Order", back_populates="gun")  # Orders for this gun
 
   def __repr__(self):
     return f"<Gun: {self.model}, Price: {self.price}>"

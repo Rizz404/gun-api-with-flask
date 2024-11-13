@@ -3,6 +3,7 @@ import enum
 from flask_login import UserMixin
 from gundevilapp.app import db
 from sqlalchemy.orm import relationship
+from gundevilapp.sales.models import Sales
 
 
 # * Pake sqlite type datanya terbates hati-hati
@@ -32,7 +33,12 @@ class User(db.Model, UserMixin):
   # * Relasi one-to-one ke Cart
   cart = relationship("Cart", back_populates="user",
                       uselist=False, cascade="all, delete-orphan")
-  sales = relationship("Sales", back_populates="gun")
+  guns = relationship("Gun", back_populates="seller")
+  transactions_bought = relationship(
+    "Transaction", foreign_keys="[Transaction.buyer_id]", back_populates="buyer")
+  transactions_sold = relationship(
+    "Transaction", foreign_keys="[Transaction.seller_id]", back_populates="seller")
+  orders = relationship("Order", back_populates="user")
 
   def __repr__(self):
     return f"<User: {self.username} and Role: {self.role}>"

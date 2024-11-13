@@ -20,7 +20,8 @@ def parse_gun_data(data, is_form=False):
       'action': data.get('action'),
       'price': int(data.get('price')) if data.get('price') else None,
       'description': data.get('description'),
-      'stock': int(data.get('stock')) if data.get('stock') else 0
+      'stock': int(data.get('stock')) if data.get('stock') else None,
+      'sold_count': int(data.get('sold_count')) if data.get('sold_count') else None,
     }
   return {
     'model': data.get('model'),
@@ -31,7 +32,8 @@ def parse_gun_data(data, is_form=False):
     'action': data.get('action'),
     'price': data.get('price'),
     'description': data.get('description'),
-    'stock': data.get('stock', 0)
+    'stock': data.get('stock', None),
+    'sold_count': data.get('sold_count', None)
   }
 
 
