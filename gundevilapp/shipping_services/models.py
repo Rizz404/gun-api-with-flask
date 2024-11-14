@@ -16,6 +16,9 @@ class ShippingService(db.Model):
   updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(
     timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+  # Relasi ke Order
+  orders = relationship("Order", back_populates="shipping_service")
+
   def __repr__(self):
     return f"<Shipping service id: {self.id}>"
 

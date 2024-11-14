@@ -14,8 +14,10 @@ class Transaction(db.Model):
   __tablename__ = 'transactions'
 
   id = db.Column(db.Integer, primary_key=True)
-  buyer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-  seller_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+  buyer_id = db.Column(db.Integer, db.ForeignKey(
+    'users.id'), nullable=False)  # Foreign Key untuk pembeli
+  seller_id = db.Column(db.Integer, db.ForeignKey(
+    'users.id'), nullable=False)  # Foreign Key untuk penjual
   payment_method_id = db.Column(
     db.Integer, db.ForeignKey('payment_methods.id'), nullable=False)
   admin_fee = db.Column(db.Integer, nullable=False, default=0)

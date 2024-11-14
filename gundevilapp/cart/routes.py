@@ -1,5 +1,7 @@
 from flask import request, Blueprint, jsonify
 from flask_login import login_required, current_user
+
+from gundevilapp.utils import serialize_model
 from ..utils import api_response
 
 from gundevilapp.app import db
@@ -41,7 +43,7 @@ def index():
     cart = Cart.query.filter_by(user_id=current_user.id).first()
 
     return api_response.success(
-      data=cart.to_dict()
+      data=serialize_model(cart)
     )
   elif request.method == 'POST':
     try:
@@ -58,7 +60,7 @@ def index():
       db.session.add(cart)
       db.session.commit()
       return api_response.success(
-        data=cart.to_dict(),
+        data=serialize_model(cart),
         code=201
       )
     except ValueError as e:
@@ -84,7 +86,7 @@ def with_id(id):
 
   if request.method == 'GET':
     return api_response.success(
-      data=cart.to_dict()
+      data=serialize_model(cart)
     )
 
   elif request.method == 'DELETE':
@@ -129,7 +131,7 @@ def cart_items():
       db.session.add(cart_items)
       db.session.commit()
       return api_response.success(
-        data=cart.to_dict(),
+        data=serialize_model(cart),
         code=201
       )
     except ValueError as e:
@@ -170,7 +172,7 @@ def cart_items_with_id(id):
 
       return api_response.success(
         message="Cart item updated sucessfully",
-        data=cart_item.to_dict()
+        data=serialize_model(cart_item)
       )
     except ValueError as e:
       db.session.rollback()

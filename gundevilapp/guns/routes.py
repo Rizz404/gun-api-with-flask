@@ -2,6 +2,7 @@ from flask import request, Blueprint, jsonify
 
 from gundevilapp.app import db
 from gundevilapp.guns.models import Gun, GunPictures
+from flask_login import login_required
 # ? gak tau cara kerja importnya gimana, yang penting work
 from ..utils import api_response
 
@@ -55,6 +56,7 @@ def create_gun_pictures(gun, pictures_data):
 
 
 @guns.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
   if request.method == 'GET':
     page = request.args.get('page', 1, type=int)

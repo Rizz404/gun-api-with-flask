@@ -18,9 +18,9 @@ class Sales(db.Model):
   updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(
     timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-  # * Relasi ke User dan Gun
-  user = relationship("User", back_populates="sales")
-  gun = relationship("Gun", back_populates="sales")
+  # # * Relasi ke User dan Gun
+  # user = relationship("User", back_populates="sales")
+  # gun = relationship("Gun", back_populates="sales")
 
   def __repr__(self):
     return f"<Sales: {self.id}, User: {self.user}, Amount: {self.total_amount}>"

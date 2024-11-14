@@ -58,7 +58,10 @@ def create_app():
   from gundevilapp.guns.routes import guns
   from gundevilapp.users.routes import users
   from gundevilapp.cart.routes import cart
-  from gundevilapp.sales.routes import sales
+  from gundevilapp.orders.routes import orders
+  from gundevilapp.payment_methods.routes import payment_methods
+  from gundevilapp.shipping_services.routes import shipping_services
+  from gundevilapp.transactions.routes import transactions
 
   # * Nanti tinggal tambahin kalo mau ada routes lain
   app.register_blueprint(core, url_prefix='/')
@@ -66,7 +69,10 @@ def create_app():
   app.register_blueprint(guns, url_prefix='/guns')
   app.register_blueprint(users, url_prefix='/users')
   app.register_blueprint(cart, url_prefix='/cart')
-  app.register_blueprint(sales, url_prefix='/sales')
+  app.register_blueprint(orders, url_prefix='/orders')
+  app.register_blueprint(payment_methods, url_prefix='/payment_methods')
+  app.register_blueprint(shipping_services, url_prefix='/shipping_services')
+  app.register_blueprint(transactions, url_prefix='/transactions')
 
   migrate = Migrate(app, db)
 

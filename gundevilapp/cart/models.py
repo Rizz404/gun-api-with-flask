@@ -26,16 +26,6 @@ class Cart(db.Model):
   def get_id(self):
     return self.id
 
-  def to_dict(self):
-    return {
-      "id": self.id,
-      "user_id": self.user_id,
-      "created_at": self.created_at.isoformat(),
-      "updated_at": self.updated_at.isoformat(),
-      # Include related cart_items
-      "cart_items": [cart_item.to_dict() for cart_item in self.cart_items]
-    }
-
 
 class CartItems(db.Model):
   __tablename__ = 'cart_items'
@@ -55,12 +45,3 @@ class CartItems(db.Model):
 
   def get_id(self):
     return self.id
-
-  def to_dict(self):
-    return {
-      "id": self.id,
-      "cart_id": self.cart_id,
-      "gun_id": self.gun_id,
-      "quantity": self.quantity,
-      "gun": self.gun.to_dict()
-    }

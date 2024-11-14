@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import enum
 from flask_login import UserMixin
+from sqlalchemy import Transaction
 from gundevilapp.app import db
 from sqlalchemy.orm import relationship
 from gundevilapp.sales.models import Sales
@@ -38,6 +39,7 @@ class User(db.Model, UserMixin):
     "Transaction", foreign_keys="[Transaction.buyer_id]", back_populates="buyer")
   transactions_sold = relationship(
     "Transaction", foreign_keys="[Transaction.seller_id]", back_populates="seller")
+
   orders = relationship("Order", back_populates="user")
 
   def __repr__(self):

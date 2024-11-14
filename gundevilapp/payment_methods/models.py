@@ -15,6 +15,8 @@ class PaymentMethod(db.Model):
   updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(
     timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+  transactions = relationship("Transaction", back_populates="payment_method")
+
   def __repr__(self):
     return f"<Payment Method id: {self.id}>"
 
