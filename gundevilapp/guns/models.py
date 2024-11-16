@@ -39,8 +39,8 @@ class Gun(db.Model):
   def get_id(self):
     return self.id
 
-  def to_dict(self):
-    return {
+  def to_dict(self, include_relationships=None):
+    data = {
       "id": self.id,
       "model": self.model,
       "caliber": self.caliber,
@@ -51,12 +51,20 @@ class Gun(db.Model):
       "price": self.price,
       "description": self.description,
       "stock": self.stock,
-      "sold_count": self.sold_count,
-      "created_at": self.created_at.isoformat(),
-      "updated_at": self.updated_at.isoformat(),
-      # Include related pictures
-      "pictures": [picture.to_dict() for picture in self.pictures]
+      "created_at": self.created_at.isoformat() if self.created_at else None,
+      "updated_at": self.updated_at.isoformat() if self.updated_at else None,
     }
+
+    if include_relationships:
+      if "pictures" in include_relationships:
+        data['pictures'] = [picture.to_dict() for picture in self.pictures]
+      elif "seller" in include_relationships:
+        data["seller"] = self.seller.to_dict(
+        ) if self.seller.to_dict() else None
+      elif "orders" in include_relationships:
+        data['orders'] = [order.to_dict() for order in self.orders]
+
+    return data
 
 
 class GunPictures(db.Model):

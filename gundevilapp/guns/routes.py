@@ -55,7 +55,20 @@ def create_gun_pictures(gun, pictures_data):
       db.session.add(picture)
 
 
-@guns.route('/', methods=['GET', 'POST'])
+@guns.route('/', methods=['GET'])
+def get_guns():
+  page = request.args.get('page', 1, type=int)
+  page_size = request.args.get('page_size', 10, type=int)
+
+  guns_query = Gun.query
+  return api_response.paginate(
+      query=guns_query,
+      page=page,
+      page_size=page_size
+    )
+
+
+@guns.route('/', methods=['POST'])
 @login_required
 def create():
   try:
@@ -98,19 +111,6 @@ def create():
       message="Internal server error",
       code=500,
       errors=str(e)
-    )
-
-
-@guns.route('/', methods=['GET'])
-def get_guns():
-  page = request.args.get('page', 1, type=int)
-  page_size = request.args.get('page_size', 10, type=int)
-
-  guns_query = Gun.query
-  return api_response.paginate(
-      query=guns_query,
-      page=page,
-      page_size=page_size
     )
 
 

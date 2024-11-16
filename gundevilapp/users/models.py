@@ -59,5 +59,4 @@ class User(db.Model, UserMixin):
       "bio": self.bio,
       "created_at": self.created_at,
       "updated_at": self.updated_at,
-      "cart": self.cart.to_dict() if self.cart else None
     }
