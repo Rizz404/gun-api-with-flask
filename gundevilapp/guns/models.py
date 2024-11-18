@@ -56,13 +56,15 @@ class Gun(db.Model):
     }
 
     if include_relationships:
-      if "pictures" in include_relationships:
-        data['pictures'] = [picture.to_dict() for picture in self.pictures]
-      elif "seller" in include_relationships:
-        data["seller"] = self.seller.to_dict(
-        ) if self.seller.to_dict() else None
-      elif "orders" in include_relationships:
-        data['orders'] = [order.to_dict() for order in self.orders]
+      for relationship in include_relationships:
+        match relationship:
+          case 'seller':
+            data["seller"] = self.seller.to_dict(
+            ) if self.seller.to_dict() else None
+          case 'pictures':
+            data['pictures'] = [picture.to_dict() for picture in self.pictures]
+          case 'orders':
+            data['orders'] = [order.to_dict() for order in self.orders]
 
     return data
 

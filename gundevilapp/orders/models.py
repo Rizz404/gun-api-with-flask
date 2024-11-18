@@ -33,3 +33,35 @@ class Order(db.Model):
 
   def get_id(self):
     return self.id
+
+  def to_dict(self, include_relationships=None):
+    data = {
+      'id': self.id,
+      'user_id': self.user_id,
+      'gun_id': self.gun_id,
+      'transaction_id': self.transaction_id,
+      'shipping_service_id': self.shipping_service_id,
+      'price_sold': self.price_sold,
+      'quantity': self.quantity,
+      'total_price': self.total_price,
+      'created_at': self.created_at,
+      'updated_at': self.updated_at,
+    }
+
+    if include_relationships:
+      for relationship in include_relationships:
+        match relationship:
+          case "user":
+            data["user"] = self.user.to_dict() if self.user else None
+          case "gun":
+            data["gun"] = self.gun.to_dict() if self.gun else None
+          case "transaction":
+            data["transaction"] = self.transaction.to_dict(
+            ) if self.transaction else None
+          case "shipping_service":
+            data["shipping_service"] = self.shipping_service.to_dict(
+            ) if self.shipping_service else None
+          case _:
+            pass
+
+    return data

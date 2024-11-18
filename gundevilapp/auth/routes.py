@@ -5,6 +5,7 @@ from ..utils import api_response
 
 from gundevilapp.app import db, bcrypt
 from gundevilapp.users.models import User, RoleEnum
+from gundevilapp.users.routes import parse_user_data
 
 auth = Blueprint('auth', __name__, template_folder='templates')
 
@@ -120,17 +121,4 @@ def logout():
   logout_user()
   return api_response.success(
     message="Logout successfull"
-  )
-
-
-@auth.route('/profile', methods=['GET'])
-@login_required
-def get_user_profile():
-  user_data = {
-      "id": current_user.id,
-      "username": current_user.username,
-      "email": current_user.email
-  }
-  return api_response.success(
-    data=user_data
   )

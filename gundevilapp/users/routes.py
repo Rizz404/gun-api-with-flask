@@ -9,25 +9,14 @@ users = Blueprint('users', __name__, template_folder='templates')
 
 
 def parse_user_data(data):
-  # * Deteksi apakah data berbentuk dict (kemungkinan dari JSON) atau ImmutableMultiDict (dari form)
-  if isinstance(data, dict):  # * JSON input (request.get_json())
-    return {
-        'username': data.get('username'),
-        'email': data.get('email'),
-        'password': data.get('password'),
-        'role': data.get('role'),
-        'picture': data.get('picture'),  # nullable
-        'bio': data.get('bio'),  # nullable
-    }
-  else:  # * Form input (request.form)
-    return {
-        'username': data.get('username', None),
-        'email': data.get('email', None),
-        'password': data.get('password', None),
-        'role': data.get('role', None),
-        'picture': data.get('picture', None),  # nullable
-        'bio': data.get('bio', None),  # nullable
-    }
+  return {
+    'username': data.get('username'),
+    'email': data.get('email'),
+    'password': data.get('password'),
+    'role': data.get('role'),
+    'picture': data.get('picture'),  # nullable
+    'bio': data.get('bio'),  # nullable
+  }
 
 
 @users.route('/')
@@ -68,10 +57,8 @@ def update_and_delete_user_by_id(id):
 
   if request.method == 'PATCH':
     try:
-      if request.is_json:
-        user_data = parse_user_data(request.get_json())
-      else:
-        user_data = parse_user_data(request.form)
+      user_body = request.get_json() if request.is_json else request.form
+      user_data = parse_user_data(user_body)
 
       for key, value in user_data.items():
         if value is not None:
@@ -121,26 +108,13 @@ def get_and_update_user_profile():
     )
 
   if request.method == 'GET':
-    user_data = {
-        "id": current_user.id,
-        "username": current_user.username,
-        "email": current_user.email,
-        "password": current_user.password,
-        "role": current_user.role.value,
-        "picture": current_user.picture,
-        "bio": current_user.bio,
-        "created_at": current_user.created_at,
-        "updated_at": current_user.updated_at,
-    }
     return api_response.success(
-      data=user_data
+      data=user.to_dict()
     )
   elif request.method == 'PATCH':
     try:
-      if request.is_json:
-        user_data = parse_user_data(request.get_json())
-      else:
-        user_data = parse_user_data(request.form)
+      user_body = request.get_json() if request.is_json else request.form
+      user_data = parse_user_data(user_body)
 
       for key, value in user_data.items():
         if value is not None:

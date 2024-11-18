@@ -10,32 +10,19 @@ guns = Blueprint('guns', __name__, template_folder='templates')
 
 
 def parse_gun_data(data):
-  if isinstance(data, dict):  # * JSON input
-    return {
-      'model': data.get('model'),
-      'caliber': int(data.get('caliber')) if data.get('caliber') else None,
-      'capacity': int(data.get('capacity')) if data.get('capacity') else None,
-      'length': int(data.get('length')) if data.get('length') else None,
-      'weight': int(data.get('weight')) if data.get('weight') else None,
-      'action': data.get('action'),
-      'price': int(data.get('price')) if data.get('price') else None,
-      'description': data.get('description'),
-      'stock': int(data.get('stock')) if data.get('stock') else None,
-      'sold_count': int(data.get('sold_count')) if data.get('sold_count') else None,
-    }
-  else:  # Form input
-    return {
-      'model': data.get('model', None),
-      'caliber': int(data.get('caliber')) if data.get('caliber') else None,
-      'capacity': int(data.get('capacity')) if data.get('capacity') else None,
-      'length': int(data.get('length')) if data.get('length') else None,
-      'weight': int(data.get('weight')) if data.get('weight') else None,
-      'action': data.get('action', None),
-      'price': int(data.get('price')) if data.get('price') else None,
-      'description': data.get('description', None),
-      'stock': int(data.get('stock')) if data.get('stock') else None,
-      'sold_count': int(data.get('sold_count')) if data.get('sold_count') else None,
-    }
+  return {
+    'model': data.get('model'),
+    # * Untuk cegah yang int dikonversi kalo null
+    'caliber': int(data.get('caliber')) if data.get('caliber') else None,
+    'capacity': int(data.get('capacity')) if data.get('capacity') else None,
+    'length': int(data.get('length')) if data.get('length') else None,
+    'weight': int(data.get('weight')) if data.get('weight') else None,
+    'action': data.get('action'),
+    'price': int(data.get('price')) if data.get('price') else None,
+    'description': data.get('description'),
+    'stock': int(data.get('stock')) if data.get('stock') else None,
+    'sold_count': int(data.get('sold_count')) if data.get('sold_count') else None,
+  }
 
 
 def create_gun_pictures(gun, pictures_data):
@@ -55,30 +42,15 @@ def create_gun_pictures(gun, pictures_data):
       db.session.add(picture)
 
 
-@guns.route('/', methods=['GET'])
-def get_guns():
-  page = request.args.get('page', 1, type=int)
-  page_size = request.args.get('page_size', 10, type=int)
-
-  guns_query = Gun.query
-  return api_response.paginate(
-      query=guns_query,
-      page=page,
-      page_size=page_size
-    )
-
-
 @guns.route('/', methods=['POST'])
 @login_required
 def create():
   try:
-    if request.is_json:
-      data = request.get_json()
-      gun_data = parse_gun_data(data)
-      pictures_data = data.get('pictures', [])
-    else:
-      gun_data = parse_gun_data(request.form)
-      pictures_data = request.form.getlist('pictures')
+    gun_body = request.get_json() if request.is_json else request.form
+    gun_data = parse_gun_data(gun_body)
+
+    pictures_data = request.get_json().data.get(
+      'pictures', []) if request.is_json else request.form.getlist('pictures')
 
     required_fields = ['model', 'caliber', 'capacity', 'action', 'price']
     missing_fields = [
@@ -99,7 +71,7 @@ def create():
 
     db.session.commit()
     return api_response.success(
-      data=gun.to_dict(),
+      data=gun.to_dict(include_relationships=['seller']),
       message='Gun created successfully',
       code=201
     )
@@ -111,6 +83,20 @@ def create():
       message="Internal server error",
       code=500,
       errors=str(e)
+    )
+
+
+@guns.route('/', methods=['GET'])
+def get_guns():
+  page = request.args.get('page', 1, type=int)
+  page_size = request.args.get('page_size', 10, type=int)
+
+  guns_query = Gun.query.all()
+
+  return api_response.paginate(
+      query=guns_query,
+      page=page,
+      page_size=page_size
     )
 
 
@@ -126,7 +112,7 @@ def get_gun_by_id(id):
     )
 
   return api_response.success(
-    data=gun.to_dict()
+    data=gun.to_dict(include_relationships=['seller'])
   )
 
 
@@ -144,13 +130,11 @@ def update_and_delete_gun_by_id(id):
 
   if request.method == 'PATCH':
     try:
-      if request.is_json:
-        data = request.get_json()
-        gun_data = parse_gun_data(data)
-        pictures_data = data.get('pictures', [])
-      else:
-        gun_data = parse_gun_data(request.form)
-        pictures_data = request.form.getlist('pictures')
+      gun_body = request.get_json() if request.is_json else request.form
+      gun_data = parse_gun_data(gun_body)
+
+      pictures_data = request.get_json().data.get(
+        'pictures', []) if request.is_json else request.form.getlist('pictures')
 
       for key, value in gun_data.items():
         if value is not None:
@@ -165,7 +149,7 @@ def update_and_delete_gun_by_id(id):
       db.session.commit()
       return api_response.success(
         message="Success update gun",
-        data=gun.to_dict(),
+        data=gun.to_dict(include_relationships=['seller']),
       )
     except ValueError as e:
       db.session.rollback()
@@ -233,7 +217,8 @@ def batch_create():
 
     db.session.commit()
     return api_response.success(
-      data=[gun.to_dict() for gun in created_guns],
+      data=[gun.to_dict(include_relationships=['seller'])
+            for gun in created_guns],
       code=201
     )
   except ValueError as e:
