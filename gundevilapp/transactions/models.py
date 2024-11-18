@@ -11,7 +11,7 @@ class PaymentStatusEnum(enum.Enum):
 
 
 class Transaction(db.Model):
-  __tablename__ = 'orders'
+  __tablename__ = 'transactions'
 
   id = db.Column(db.Integer, primary_key=True)
   buyer_id = db.Column(db.Integer, db.ForeignKey(
@@ -34,10 +34,10 @@ class Transaction(db.Model):
 
   # * Relasi
   buyer = relationship("User", foreign_keys=[
-                       buyer_id], back_populates="orders_bought")
+                       buyer_id], back_populates="transactions_bought")
   seller = relationship("User", foreign_keys=[
-                        seller_id], back_populates="orders_sold")
-  payment_method = relationship("PaymentMethod", back_populates="orders")
+      seller_id], back_populates="transactions_sold")
+  payment_method = relationship("PaymentMethod", back_populates="transactions")
   orders = relationship("Order", back_populates="transaction")
 
   def __repr__(self):

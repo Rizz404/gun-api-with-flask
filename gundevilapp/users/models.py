@@ -4,7 +4,6 @@ from flask_login import UserMixin
 from sqlalchemy import Transaction
 from gundevilapp.app import db
 from sqlalchemy.orm import relationship
-from gundevilapp.sales.models import Sales
 
 
 # * Pake sqlite type datanya terbates hati-hati
