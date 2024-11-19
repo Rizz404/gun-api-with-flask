@@ -61,7 +61,7 @@ def get_shipping_services():
   page = request.args.get('page', 1, type=int)
   page_size = request.args.get('page_size', 10, type=int)
 
-  shipping_services_query = ShippingService.query.all()
+  shipping_services_query = ShippingService.query
 
   return api_response.paginate(
       query=shipping_services_query,
@@ -124,9 +124,6 @@ def update_and_delete_shipping_service_by_id(id):
 
   elif request.method == 'DELETE':
     try:
-      for picture in shipping_service.pictures:
-        db.session.delete(picture)
-
       db.session.delete(shipping_service)
       db.session.commit()
 

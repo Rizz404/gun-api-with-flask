@@ -60,7 +60,7 @@ def get_payment_methods():
   page = request.args.get('page', 1, type=int)
   page_size = request.args.get('page_size', 10, type=int)
 
-  payment_methods_query = PaymentMethod.query.all()
+  payment_methods_query = PaymentMethod.query
 
   return api_response.paginate(
       query=payment_methods_query,
@@ -123,9 +123,6 @@ def update_and_delete_payment_method_by_id(id):
 
   elif request.method == 'DELETE':
     try:
-      for picture in payment_method.pictures:
-        db.session.delete(picture)
-
       db.session.delete(payment_method)
       db.session.commit()
 
