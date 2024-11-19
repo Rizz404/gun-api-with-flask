@@ -8,7 +8,7 @@ class APIResponse:
 
   def success(
     self,
-    data: Union[List, Dict, Any],
+    data: Optional[Union[List, Dict, Any]] = None,
     message: str = "Success",
     code: int = 200,
     meta: Optional[Dict] = None,
@@ -49,7 +49,8 @@ class APIResponse:
     query,
     page: int = 1,
     page_size: Optional[int] = None,
-    schema=None
+    schema=None,
+    include_relationships: Optional[List[str]] = None,
   ):
     if page_size is None:
       page_size = self.DEFAULT_PAGE_SIZE
@@ -61,7 +62,7 @@ class APIResponse:
     )
 
     # ! harus punya to_dict method disemua model biar bisa
-    data = [item.to_dict() if hasattr(item, 'to_dict') else item
+    data = [item.to_dict(include_relationships=include_relationships) if hasattr(item, 'to_dict') else item
             for item in paginated.items]
 
     if schema:

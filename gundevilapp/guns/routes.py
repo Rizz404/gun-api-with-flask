@@ -2,7 +2,7 @@ from flask import request, Blueprint, jsonify
 
 from gundevilapp.app import db
 from gundevilapp.guns.models import Gun, GunPictures
-from flask_login import login_required
+from flask_login import login_required, current_user
 # ? gak tau cara kerja importnya gimana, yang penting work
 from ..utils import api_response
 
@@ -21,7 +21,6 @@ def parse_gun_data(data):
     'price': int(data.get('price')) if data.get('price') else None,
     'description': data.get('description'),
     'stock': int(data.get('stock')) if data.get('stock') else None,
-    'sold_count': int(data.get('sold_count')) if data.get('sold_count') else None,
   }
 
 
@@ -48,6 +47,8 @@ def create():
   try:
     gun_body = request.get_json() if request.is_json else request.form
     gun_data = parse_gun_data(gun_body)
+
+    gun_data['seller_id'] = current_user.id
 
     pictures_data = request.get_json().data.get(
       'pictures', []) if request.is_json else request.form.getlist('pictures')
@@ -91,12 +92,13 @@ def get_guns():
   page = request.args.get('page', 1, type=int)
   page_size = request.args.get('page_size', 10, type=int)
 
-  guns_query = Gun.query.all()
+  guns_query = Gun.query
 
   return api_response.paginate(
       query=guns_query,
       page=page,
-      page_size=page_size
+      page_size=page_size,
+      include_relationships=['seller'],
     )
 
 
@@ -184,17 +186,12 @@ def update_and_delete_gun_by_id(id):
 
 
 @guns.route('/create-batch', methods=['POST'])
+@login_required
 def batch_create():
   try:
-    if not request.is_json:
-      return api_response.error(
-        message="Request must be JSON",
-        code=400
-      )
+    gun_body = request.get_json() if request.is_json else request.form
 
-    data = request.get_json()
-
-    if not isinstance(data, list):
+    if not isinstance(gun_body, list):
       return api_response.error(
         message="Request must be an array of guns",
         code=400
@@ -202,20 +199,23 @@ def batch_create():
 
     created_guns = []
 
-    for gun_item in data:
+    for gun_item in gun_body:
       gun_data = parse_gun_data(gun_item)
-      pictures_data = gun_item.get('pictures', [])
+      pictures_data = gun_item.get(
+        'pictures', []) if request.is_json else request.form.getlist('pictures')
+
+      gun_data['seller_id'] = current_user.id
 
       gun = Gun(**gun_data)
-
-      db.session.add(gun)
 
       if pictures_data:
         create_gun_pictures(gun, pictures_data)
 
       created_guns.append(gun)
 
+    db.session.bulk_save_objects(created_guns)
     db.session.commit()
+
     return api_response.success(
       data=[gun.to_dict(include_relationships=['seller'])
             for gun in created_guns],
@@ -233,6 +233,7 @@ def batch_create():
 
 
 @guns.route('/delete-batch', methods=['DELETE'])
+@login_required
 def batch_delete():
   try:
     guns = Gun.query.all()
