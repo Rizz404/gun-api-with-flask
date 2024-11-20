@@ -16,8 +16,6 @@ class Transaction(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   buyer_id = db.Column(db.Integer, db.ForeignKey(
     'users.id'), nullable=False)  # Foreign Key untuk pembeli
-  seller_id = db.Column(db.Integer, db.ForeignKey(
-    'users.id'), nullable=False)  # Foreign Key untuk penjual
   payment_method_id = db.Column(
     db.Integer, db.ForeignKey('payment_methods.id'), nullable=False)
   admin_fee = db.Column(db.Integer, nullable=False, default=0)
@@ -35,8 +33,6 @@ class Transaction(db.Model):
   # * Relasi
   buyer = relationship("User", foreign_keys=[
                        buyer_id], back_populates="transactions_bought")
-  seller = relationship("User", foreign_keys=[
-      seller_id], back_populates="transactions_sold")
   payment_method = relationship("PaymentMethod", back_populates="transactions")
   orders = relationship("Order", back_populates="transaction")
 
@@ -50,7 +46,6 @@ class Transaction(db.Model):
     data = {
       'id': self.id,
       'buyer_id': self.buyer_id,
-      'seller_id': self.seller_id,
       'payment_method_id': self.payment_method_id,
       'admin_fee': self.admin_fee,
       'shipping_service_fee': self.shipping_service_fee,
@@ -65,9 +60,6 @@ class Transaction(db.Model):
     if include_relationships:
       for relationship in include_relationships:
         match relationship:
-          case 'seller':
-            data["seller"] = self.seller.to_dict(
-            ) if self.seller.to_dict() else None
           case 'buyer':
             data["buyer"] = self.buyer.to_dict(
             ) if self.buyer.to_dict() else None

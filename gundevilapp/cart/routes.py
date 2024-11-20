@@ -1,7 +1,6 @@
 from flask import request, Blueprint, jsonify
 from flask_login import login_required, current_user
 
-from gundevilapp.utils import serialize_model
 from ..utils import api_response
 
 from gundevilapp.app import db
@@ -21,7 +20,7 @@ def parse_cart_data(data, is_form=False):
   }
 
 
-def parse_cart_items_data(data, is_form=False):
+def parse_cart_item_data(data, is_form=False):
   # * Helper function buat parse data buat form dan juga json
   if is_form:
     return {
@@ -43,7 +42,7 @@ def index():
     cart = Cart.query.filter_by(user_id=current_user.id).first()
 
     return api_response.success(
-      data=serialize_model(cart)
+      data=cart.to_dict(),
     )
   elif request.method == 'POST':
     try:
@@ -56,11 +55,16 @@ def index():
       # * Gunakan current_user.id untuk user_id
       cart_data['user_id'] = current_user.id
 
+      existing_cart = Cart.query.filter_by(user_id=current_user.id).first()
+
+      if existing_cart:
+        return api_response.error(message="Cart already created")
+
       cart = Cart(**cart_data)
       db.session.add(cart)
       db.session.commit()
       return api_response.success(
-        data=serialize_model(cart),
+        data=cart.to_dict(),
         code=201
       )
     except ValueError as e:
@@ -86,7 +90,7 @@ def with_id(id):
 
   if request.method == 'GET':
     return api_response.success(
-      data=serialize_model(cart)
+      data=cart.to_dict()
     )
 
   elif request.method == 'DELETE':
@@ -108,30 +112,44 @@ def with_id(id):
       )
 
 
-@cart.route('/cart-items/', methods=['POST'])
+@cart.route('/cart-items/', methods=['GET', 'POST'])
 def cart_items():
-  if request.method == 'POST':
+  if request.method == 'GET':
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
+
+    cart = Cart.query.filter_by(user_id=current_user.id).first()
+
+    cart_items = CartItems.query.filter_by(cart_id=cart.id)
+
+    return api_response.paginate(
+      query=cart_items,
+      page=page,
+      page_size=page_size,
+    )
+  elif request.method == 'POST':
     try:
       if request.is_json:
         data = request.get_json()
-        cart_items_data = parse_cart_items_data(data)
+        cart_item_data = parse_cart_item_data(data)
       else:
-        cart_items_data = parse_cart_items_data(request.form, is_form=True)
+        cart_item_data = parse_cart_item_data(request.form, is_form=True)
 
       required_fields = ['cart_id', 'gun_id']
       missing_fields = [
-        field for field in required_fields if not cart_items_data.get(field)]
+        field for field in required_fields if not cart_item_data.get(field)]
       if missing_fields:
         return api_response.error(
           message="Missing required fields",
           errors=missing_fields
         )
 
-      cart_items = CartItems(**cart_items_data)
-      db.session.add(cart_items)
+      cart_item = CartItems(**cart_item_data)
+      db.session.add(cart_item)
       db.session.commit()
+
       return api_response.success(
-        data=serialize_model(cart),
+        data=cart_item.to_dict(),
         code=201
       )
     except ValueError as e:
@@ -159,20 +177,20 @@ def cart_items_with_id(id):
     try:
       if request.is_json:
         data = request.get_json()
-        cart_items_data = parse_cart_items_data(data)
+        cart_item_data = parse_cart_item_data(data)
       else:
-        cart_items_data = parse_cart_items_data(request.form, is_form=True)
+        cart_item_data = parse_cart_item_data(request.form, is_form=True)
 
-      if cart_items_data.get('gun_id'):
-        cart_item.gun_id = cart_items_data['gun_id']
-      if cart_items_data.get('quantity'):
-        cart_item.quantity = cart_items_data['quantity']
+      if cart_item_data.get('gun_id'):
+        cart_item.gun_id = cart_item_data['gun_id']
+      if cart_item_data.get('quantity'):
+        cart_item.quantity = cart_item_data['quantity']
 
       db.session.commit()
 
       return api_response.success(
         message="Cart item updated sucessfully",
-        data=serialize_model(cart_item)
+        data=cart_item.to_dict()
       )
     except ValueError as e:
       db.session.rollback()

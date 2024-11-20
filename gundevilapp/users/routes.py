@@ -26,7 +26,7 @@ def get_users():
 
   users_query = User.query
 
-  return api_response.paginate(users_query, page, page_size)
+  return api_response.paginate(query=users_query, page=page, page_size=page_size)
 
 
 @users.route('/<int:id>', methods=['GET'])

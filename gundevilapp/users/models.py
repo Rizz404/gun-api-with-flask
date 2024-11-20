@@ -36,8 +36,6 @@ class User(db.Model, UserMixin):
   guns = relationship("Gun", back_populates="seller")
   transactions_bought = relationship(
     "Transaction", foreign_keys="[Transaction.buyer_id]", back_populates="buyer")
-  transactions_sold = relationship(
-    "Transaction", foreign_keys="[Transaction.seller_id]", back_populates="seller")
 
   orders = relationship("Order", back_populates="user")
 
@@ -47,8 +45,8 @@ class User(db.Model, UserMixin):
   def get_id(self):
     return self.id
 
-  def to_dict(self):
-    return {
+  def to_dict(self, include_relationships=None):
+    data = {
       "id": self.id,
       "username": self.username,
       "email": self.email,
@@ -56,6 +54,14 @@ class User(db.Model, UserMixin):
       "role": self.role.value,
       "picture": self.picture,
       "bio": self.bio,
-      "created_at": self.created_at,
-      "updated_at": self.updated_at,
+      "created_at": self.created_at.isoformat() if self.created_at else None,
+      "updated_at": self.updated_at.isoformat() if self.updated_at else None,
     }
+
+    if include_relationships:
+      for relationship in include_relationships:
+        match relationship:
+          case 'guns':
+            data['guns'] = [gun.to_dict() for gun in self.guns]
+
+    return data

@@ -2,7 +2,7 @@ from flask import request, Blueprint
 
 from gundevilapp.app import db
 from gundevilapp.transactions.models import Transaction
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from ..utils import api_response
 
@@ -13,7 +13,6 @@ transactions = Blueprint(
 def parse_transaction_data(data):
   return {
     'buyer_id': int(data.get('buyer_id')) if data.get('buyer_id') else None,
-    'seller_id': int(data.get('seller_id')) if data.get('seller_id') else None,
     'payment_method_id': int(data.get('payment_method_id')) if data.get('payment_method_id') else None,
     'admin_fee': int(data.get('admin_fee')) if data.get('admin_fee') else None,
     'shipping_service_fee': int(data.get('shipping_service_fee')) if data.get('shipping_service_fee') else None,
@@ -31,15 +30,18 @@ def create():
     transaction_body = request.get_json() if request.is_json else request.form
     transaction_data = parse_transaction_data(transaction_body)
 
-    required_fields = ['buyer_id',
-                       'seller_id',
-                       'payment_method_id',
-                       'admin_fee',
-                       'shipping_service_fee',
-                       'payment_method_fee',
-                       'sub_total',
-                       'total',
-                       'payment_status',]
+    transaction_data['buyer_id'] = current_user.id
+    transaction_data['total'] = transaction_data['sub_total'] + \
+        transaction_data['admin_fee'] + transaction_data['shipping_service_fee'] + \
+        transaction_data['payment_method_fee']
+
+    required_fields = [
+        'payment_method_id',
+        'admin_fee',
+        'shipping_service_fee',
+        'payment_method_fee',
+        'sub_total',
+    ]
     missing_fields = [
       field for field in required_fields if not transaction_data.get(field)]
     if missing_fields:
