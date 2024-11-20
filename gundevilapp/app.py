@@ -21,14 +21,6 @@ def create_app():
     # * Konfigurasi SSL yang lebih aman
     database_url = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'connect_args': {
-            'ssl': {
-              'ca': '../ca-certificate.crt',  # * Path ke file CA certificate
-              'ssl_mode': 'REQUIRED'
-            }
-        }
-    }
   else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./gun.db'
 
