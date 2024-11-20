@@ -24,6 +24,9 @@ def create_app():
   else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./gun.db'
 
+  print(f"VERCEL_ENV: {os.getenv('VERCEL_ENV')}")
+  print(f"DATABASE_URL: {os.getenv('DATABASE_URL')}")
+
   # * Waktu session login
   app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=7)
 
