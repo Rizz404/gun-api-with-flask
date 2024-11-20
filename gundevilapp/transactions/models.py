@@ -52,7 +52,7 @@ class Transaction(db.Model):
       'payment_method_fee': self.payment_method_fee,
       'sub_total': self.sub_total,
       'total': self.total,
-      'payment_status': self.payment_status,
+      'payment_status': self.payment_status.value,
       "created_at": self.created_at.isoformat() if self.created_at else None,
       "updated_at": self.updated_at.isoformat() if self.updated_at else None,
     }

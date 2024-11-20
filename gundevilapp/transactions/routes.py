@@ -76,7 +76,7 @@ def get_transactions():
   page = request.args.get('page', 1, type=int)
   page_size = request.args.get('page_size', 10, type=int)
 
-  transactions_query = Transaction.query.all()
+  transactions_query = Transaction.query
 
   return api_response.paginate(
       query=transactions_query,
@@ -139,14 +139,11 @@ def update_and_delete_payment_method_by_id(id):
 
   elif request.method == 'DELETE':
     try:
-      for picture in transactions.pictures:
-        db.session.delete(picture)
-
       db.session.delete(transactions)
       db.session.commit()
 
       return api_response.success(
-        message=f"Successfully delete payment method with id:{id}"
+        message=f"Successfully delete transaction with id:{id}"
       )
     except ValueError as e:
       db.session.rollback()

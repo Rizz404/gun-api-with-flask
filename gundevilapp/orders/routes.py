@@ -2,7 +2,9 @@ from flask import request, Blueprint
 
 from gundevilapp.app import db
 from gundevilapp.orders.models import Order
-from flask_login import login_required
+from gundevilapp.shipping_services.models import ShippingService
+from gundevilapp.guns.models import Gun
+from flask_login import login_required, current_user
 
 from ..utils import api_response
 
@@ -26,13 +28,20 @@ def create():
   try:
     order_body = request.get_json() if request.is_json else request.form
     order_data = parse_order_data(order_body)
+    shipping_service = ShippingService.query.get(
+      order_data['shipping_service_id'])
+    gun = Gun.query.get(order_data['gun_id'])
+
+    order_data['user_id'] = current_user.id
+    order_data['price_sold'] = gun.price
+    order_data['total_price'] = gun.price * \
+        order_data['quantity'] + shipping_service.shipping_service_fee
 
     required_fields = ['gun_id',
                        'transaction_id',
                        'shipping_service_id',
-                       'price_sold',
                        'quantity',
-                       'total_price']
+                       ]
     missing_fields = [
       field for field in required_fields if not order_data.get(field)]
     if missing_fields:
@@ -68,7 +77,7 @@ def get_orders():
   page = request.args.get('page', 1, type=int)
   page_size = request.args.get('page_size', 10, type=int)
 
-  orders_query = Order.query.all()
+  orders_query = Order.query
 
   return api_response.paginate(
       query=orders_query,
@@ -82,7 +91,7 @@ def get_orders_by_user_id(id):
   page = request.args.get('page', 1, type=int)
   page_size = request.args.get('page_size', 10, type=int)
 
-  orders_query = Order.query.filter_by(user_id=id).all()
+  orders_query = Order.query.filter_by(user_id=id)
 
   return api_response.paginate(
       query=orders_query,
